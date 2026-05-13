@@ -22,6 +22,22 @@ flutter run -d chrome \
   --dart-define=AUTH_SCOPE=openid+offline+paotangid.citizen
 ```
 
+## Deploy to GitHub Pages
+
+This repository includes a workflow at `.github/workflows/deploy-pages.yml` that builds Flutter Web and deploys it to GitHub Pages.
+
+1. Push to `main`.
+2. In GitHub, go to **Settings -> Pages**.
+3. Set **Source** to **GitHub Actions**.
+4. Wait for the workflow **Deploy Flutter Web to GitHub Pages** to finish.
+
+URL format:
+
+- Project pages: `https://<owner>.github.io/<repo>/`
+- User/org pages (`<owner>.github.io` repo): `https://<owner>.github.io/`
+
+The workflow auto-selects the correct `--base-href` based on repository name.
+
 ## Config
 
 All bridge names are configurable with `--dart-define`.
