@@ -1,0 +1,14 @@
+name: flutter_jsbridge_sample
+description: A simple Flutter Web JSBridge sample with clean structure and config-driven bridge calls.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
