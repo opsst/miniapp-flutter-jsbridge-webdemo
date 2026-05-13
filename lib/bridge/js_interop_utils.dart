@@ -1,21 +1,17 @@
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 @JS()
 external JSObject get window;
 
-extension JSObjectProperties on JSObject {
-  external JSAny? getProperty(JSString name);
-  external void setProperty(JSString name, JSAny? value);
-}
-
 extension JSObjectAccess on JSObject {
   JSObject? getJSObject(String name) {
-    final value = getProperty(name.toJS);
+    final value = getProperty<JSAny?>(name.toJS);
     return (value != null && value.isA<JSObject>()) ? value as JSObject : null;
   }
 
   JSFunction? getJSFunction(String name) {
-    final value = getProperty(name.toJS);
+    final value = getProperty<JSAny?>(name.toJS);
     return (value != null && value.isA<JSFunction>()) ? value as JSFunction : null;
   }
 

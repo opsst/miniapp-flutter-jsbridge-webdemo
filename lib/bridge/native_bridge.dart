@@ -11,6 +11,11 @@ typedef AuthErrorCallback = void Function(String errorCode, String errorDescript
 typedef ShareSuccessCallback = void Function(String? packageName);
 typedef ShareErrorCallback = void Function(String errorCode, String errorDescription);
 
+typedef SaveImageSuccessCallback = void Function(bool success);
+typedef SaveImageErrorCallback = void Function(String errorCode, String errorDescription);
+
+typedef PaymentErrorCallback = void Function(String errorCode, String errorDescription);
+
 class NativeBridge {
   final BridgeConfig config;
 
@@ -130,6 +135,101 @@ class NativeBridge {
     if (bridge == null || method == null) return false;
 
     method.callAsFunction(bridge, jsonEncode(payload).toJS);
+    return true;
+  }
+
+  // ───────── saveImageToGallery ─────────
+
+  Future<BridgeResult<void>> saveImageToGallery({
+    required String data,
+    required SaveImageSuccessCallback onSuccess,
+    required SaveImageErrorCallback onError,
+  }) async {
+    _registerSaveImageCallbacks(onSuccess: onSuccess, onError: onError);
+
+    if (data.trim().isEmpty) {
+      return const BridgeFailure(
+        code: 'INVALID_CONFIG',
+        message: 'data (base64 image) is required.',
+      );
+    }
+
+    if (_invokeAndroidSaveImage(data)) return const BridgeSuccess(null);
+    if (_postIos({'name': config.saveImageMethodName, 'base64Str': data})) {
+      return const BridgeSuccess(null);
+    }
+
+    return _bridgeNotFound('saveImageToGallery');
+  }
+
+  void _registerSaveImageCallbacks({
+    required SaveImageSuccessCallback onSuccess,
+    required SaveImageErrorCallback onError,
+  }) {
+    final callbacks = _ensureCallbackObject();
+
+    callbacks.setJSFunction(
+      config.saveImageCallbackName,
+      ((JSBoolean success) => onSuccess(success.toDart)).toJS,
+    );
+    callbacks.setJSFunction(
+      config.saveImageErrorCallbackName,
+      ((JSString code, JSString description) => onError(code.toDart, description.toDart)).toJS,
+    );
+  }
+
+  /// Android contract: a single base64 string argument.
+  bool _invokeAndroidSaveImage(String data) {
+    final bridge = window.getJSObject(config.jsBridgeObjectName);
+    final method = bridge?.getJSFunction(config.saveImageMethodName);
+    if (bridge == null || method == null) return false;
+
+    method.callAsFunction(bridge, data.toJS);
+    return true;
+  }
+
+  // ───────── openPayment ─────────
+
+  /// Triggers the Pay-with-Paotang workflow. There is no success callback —
+  /// on success native reloads the WebView with the deeplink URL. Only the
+  /// error callback is registered.
+  Future<BridgeResult<void>> openPayment({
+    required String txnRefId,
+    required PaymentErrorCallback onError,
+  }) async {
+    _registerPaymentErrorCallback(onError: onError);
+
+    if (txnRefId.trim().isEmpty) {
+      return const BridgeFailure(
+        code: 'INVALID_CONFIG',
+        message: 'txnRefId is required.',
+      );
+    }
+
+    if (_invokeAndroidOpenPayment(txnRefId)) return const BridgeSuccess(null);
+    if (_postIos({'name': config.openPaymentMethodName, 'txnRefId': txnRefId})) {
+      return const BridgeSuccess(null);
+    }
+
+    return _bridgeNotFound('openPayment');
+  }
+
+  void _registerPaymentErrorCallback({required PaymentErrorCallback onError}) {
+    final callbacks = _ensureCallbackObject();
+
+    callbacks.setJSFunction(
+      config.openPaymentErrorCallbackName,
+      ((JSString code, JSString description) => onError(code.toDart, description.toDart)).toJS,
+    );
+  }
+
+  /// Android contract: a single txnRefId string argument.
+  bool _invokeAndroidOpenPayment(String txnRefId) {
+    final bridge = window.getJSObject(config.jsBridgeObjectName);
+    final method = bridge?.getJSFunction(config.openPaymentMethodName);
+    if (bridge == null || method == null) return false;
+
+    method.callAsFunction(bridge, txnRefId.toJS);
     return true;
   }
 

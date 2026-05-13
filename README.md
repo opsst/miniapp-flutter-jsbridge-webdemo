@@ -39,6 +39,11 @@ All bridge names are configurable with `--dart-define`.
 | `SHARE_METHOD_NAME` | `shareContent` |
 | `SHARE_CALLBACK_NAME` | `shareContentCallback` |
 | `SHARE_ERROR_CALLBACK_NAME` | `shareContentCallbackError` |
+| `SAVE_IMAGE_METHOD_NAME` | `saveImageToGallery` |
+| `SAVE_IMAGE_CALLBACK_NAME` | `saveImageToGalleryCallback` |
+| `SAVE_IMAGE_ERROR_CALLBACK_NAME` | `saveImageToGalleryCallbackError` |
+| `OPEN_PAYMENT_METHOD_NAME` | `openPayment` |
+| `OPEN_PAYMENT_ERROR_CALLBACK_NAME` | `openPaymentCallbackError` |
 
 ## Native Callback Contract
 
@@ -65,6 +70,12 @@ window.JSBridge.initAuth(clientId, scope);
 // shareContent — single JSON-string arg
 window.JSBridge.shareContent(jsonString);
 // jsonString is JSON.stringify({ name, title?, description?, content, icon?, type })
+
+// saveImageToGallery — single base64 string arg
+window.JSBridge.saveImageToGallery(base64Data);
+
+// openPayment — single txnRefId string arg
+window.JSBridge.openPayment(txnRefId);
 ```
 
 ## iOS Contract
@@ -86,6 +97,16 @@ window.webkit.messageHandlers.observer.postMessage({
   icon: icon,           // optional, base64
   type: type            // 'TEXT' | 'IMAGE'
 });
+
+window.webkit.messageHandlers.observer.postMessage({
+  name: 'saveImageToGallery',
+  base64Str: base64Data
+});
+
+window.webkit.messageHandlers.observer.postMessage({
+  name: 'openPayment',
+  txnRefId: txnRefId
+});
 ```
 
 ## shareContent Callbacks
@@ -94,6 +115,28 @@ window.webkit.messageHandlers.observer.postMessage({
 window.bridge.shareContentCallback('com.example.app'); // packageName may be null
 window.bridge.shareContentCallbackError('MAW2025', 'Invalid Input');
 // Error codes: MAW2026 (missing required), MAW2025 (invalid type), MAW2027 (invalid content)
+```
+
+## saveImageToGallery Callbacks
+
+```js
+window.bridge.saveImageToGalleryCallback(true); // boolean: true on success, false on failure
+window.bridge.saveImageToGalleryCallbackError('MAW1001', 'Access Denied');
+// Error codes: MAW1001 (permission denied), MAW1002 (permission settings denied), MAW9999 (other)
+```
+
+## openPayment Callbacks
+
+No success callback — on success native reloads the WebView with the deeplink URL.
+
+```js
+window.bridge.openPaymentCallbackError('MAW2002', 'Required reference ID is missing or invalid');
+// Fixed error codes:
+//   MAW1001 (permission denied)
+//   MAW2002 (txnRefId missing/invalid)
+//   MAW2005 (user cancelled at source-of-fund screen)
+//   MAW9999 (unexpected)
+// Plus dynamic statusCd/statusDesc from the sandbox API or Pay-with-Paotang service.
 ```
 
 ## Browser Testing Mock
@@ -146,6 +189,42 @@ window.JSBridge.shareContent = function(jsonString) {
 };
 ```
 
+Save-image mock:
+
+```js
+window.JSBridge = window.JSBridge || {};
+window.JSBridge.saveImageToGallery = function(base64Data) {
+  console.log('mock saveImageToGallery, length=', base64Data.length);
+  setTimeout(() => {
+    window.bridge.saveImageToGalleryCallback(true);
+  }, 500);
+};
+```
+
+Save-image error mock (permission denied):
+
+```js
+window.JSBridge = window.JSBridge || {};
+window.JSBridge.saveImageToGallery = function(base64Data) {
+  setTimeout(() => {
+    window.bridge.saveImageToGalleryCallbackError('MAW1001', 'Access Denied');
+  }, 500);
+};
+```
+
+Open-payment mock (no success callback — only error fires):
+
+```js
+window.JSBridge = window.JSBridge || {};
+window.JSBridge.openPayment = function(txnRefId) {
+  console.log('mock openPayment txnRefId=', txnRefId);
+  // Real native would either reload the WebView (success) or call:
+  setTimeout(() => {
+    window.bridge.openPaymentCallbackError('MAW2005', 'User Canceled payment flow');
+  }, 500);
+};
+```
+
 ## Structure
 
 ```text
@@ -156,12 +235,16 @@ lib/
   features/
     auth/
     share/
+    save_image/
+    payment/
 ```
 
 - `config`: runtime configuration from `--dart-define`
 - `bridge`: low-level JS interop only
 - `features/auth`: app-level auth use case
 - `features/share`: app-level share use case
+- `features/save_image`: app-level save-to-gallery use case
+- `features/payment`: app-level Pay-with-Paotang use case
 - `app`: UI only
 
 ## Notes

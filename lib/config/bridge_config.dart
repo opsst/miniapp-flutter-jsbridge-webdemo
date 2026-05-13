@@ -14,6 +14,16 @@ class BridgeConfig {
   final String shareCallbackName;
   final String shareErrorCallbackName;
 
+  // Names of the save-image-to-gallery method and its callbacks.
+  final String saveImageMethodName;
+  final String saveImageCallbackName;
+  final String saveImageErrorCallbackName;
+
+  // Names of the open-payment method and its error callback. (No success
+  // callback — native reloads the WebView on success.)
+  final String openPaymentMethodName;
+  final String openPaymentErrorCallbackName;
+
   const BridgeConfig({
     required this.jsBridgeObjectName,
     required this.flutterCallbackObjectName,
@@ -24,6 +34,11 @@ class BridgeConfig {
     required this.shareMethodName,
     required this.shareCallbackName,
     required this.shareErrorCallbackName,
+    required this.saveImageMethodName,
+    required this.saveImageCallbackName,
+    required this.saveImageErrorCallbackName,
+    required this.openPaymentMethodName,
+    required this.openPaymentErrorCallbackName,
   });
 
   const BridgeConfig.fromEnvironment()
@@ -62,5 +77,25 @@ class BridgeConfig {
         shareErrorCallbackName = const String.fromEnvironment(
           'SHARE_ERROR_CALLBACK_NAME',
           defaultValue: 'shareContentCallbackError',
+        ),
+        saveImageMethodName = const String.fromEnvironment(
+          'SAVE_IMAGE_METHOD_NAME',
+          defaultValue: 'saveImageToGallery',
+        ),
+        saveImageCallbackName = const String.fromEnvironment(
+          'SAVE_IMAGE_CALLBACK_NAME',
+          defaultValue: 'saveImageToGalleryCallback',
+        ),
+        saveImageErrorCallbackName = const String.fromEnvironment(
+          'SAVE_IMAGE_ERROR_CALLBACK_NAME',
+          defaultValue: 'saveImageToGalleryCallbackError',
+        ),
+        openPaymentMethodName = const String.fromEnvironment(
+          'OPEN_PAYMENT_METHOD_NAME',
+          defaultValue: 'openPayment',
+        ),
+        openPaymentErrorCallbackName = const String.fromEnvironment(
+          'OPEN_PAYMENT_ERROR_CALLBACK_NAME',
+          defaultValue: 'openPaymentCallbackError',
         );
 }

@@ -4,6 +4,8 @@ import 'app/app.dart';
 import 'bridge/native_bridge.dart';
 import 'config/app_config.dart';
 import 'features/auth/auth_controller.dart';
+import 'features/payment/payment_controller.dart';
+import 'features/save_image/save_image_controller.dart';
 import 'features/share/share_controller.dart';
 
 void main() {
@@ -15,9 +17,13 @@ void main() {
     authConfig: config.authConfig,
   );
   final shareController = ShareController(nativeBridge: bridge);
+  final saveImageController = SaveImageController(nativeBridge: bridge);
+  final paymentController = PaymentController(nativeBridge: bridge);
 
   runApp(App(
     authController: authController,
     shareController: shareController,
+    saveImageController: saveImageController,
+    paymentController: paymentController,
   ));
 }

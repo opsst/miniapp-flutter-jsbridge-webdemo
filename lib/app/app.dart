@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 
 import '../features/auth/auth_controller.dart';
+import '../features/payment/payment_controller.dart';
+import '../features/save_image/save_image_controller.dart';
 import '../features/share/share_controller.dart';
 import 'auth_section.dart';
+import 'payment_section.dart';
+import 'save_image_section.dart';
 import 'share_section.dart';
 
 class App extends StatelessWidget {
   final AuthController authController;
   final ShareController shareController;
+  final SaveImageController saveImageController;
+  final PaymentController paymentController;
 
   const App({
     super.key,
     required this.authController,
     required this.shareController,
+    required this.saveImageController,
+    required this.paymentController,
   });
 
   @override
@@ -27,6 +35,8 @@ class App extends StatelessWidget {
       home: HomePage(
         authController: authController,
         shareController: shareController,
+        saveImageController: saveImageController,
+        paymentController: paymentController,
       ),
     );
   }
@@ -35,11 +45,15 @@ class App extends StatelessWidget {
 class HomePage extends StatelessWidget {
   final AuthController authController;
   final ShareController shareController;
+  final SaveImageController saveImageController;
+  final PaymentController paymentController;
 
   const HomePage({
     super.key,
     required this.authController,
     required this.shareController,
+    required this.saveImageController,
+    required this.paymentController,
   });
 
   @override
@@ -59,6 +73,14 @@ class HomePage extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 32),
                 ShareSection(controller: shareController),
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 32),
+                SaveImageSection(controller: saveImageController),
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 32),
+                PaymentSection(controller: paymentController),
               ],
             ),
           ),
