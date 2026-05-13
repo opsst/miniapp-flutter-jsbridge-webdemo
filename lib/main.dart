@@ -12,16 +12,14 @@ void main() {
   const config = AppConfig.fromEnvironment();
   final bridge = NativeBridge(config.bridgeConfig);
 
-  final authController = AuthController(
-    nativeBridge: bridge,
-    authConfig: config.authConfig,
-  );
+  final authController = AuthController(nativeBridge: bridge);
   final shareController = ShareController(nativeBridge: bridge);
   final saveImageController = SaveImageController(nativeBridge: bridge);
   final paymentController = PaymentController(nativeBridge: bridge);
 
   runApp(App(
     authController: authController,
+    authDefaults: config.authConfig,
     shareController: shareController,
     saveImageController: saveImageController,
     paymentController: paymentController,

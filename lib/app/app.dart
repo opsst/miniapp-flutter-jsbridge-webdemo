@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../config/auth_config.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/payment/payment_controller.dart';
 import '../features/save_image/save_image_controller.dart';
@@ -11,6 +12,7 @@ import 'share_section.dart';
 
 class App extends StatelessWidget {
   final AuthController authController;
+  final AuthConfig authDefaults;
   final ShareController shareController;
   final SaveImageController saveImageController;
   final PaymentController paymentController;
@@ -18,6 +20,7 @@ class App extends StatelessWidget {
   const App({
     super.key,
     required this.authController,
+    required this.authDefaults,
     required this.shareController,
     required this.saveImageController,
     required this.paymentController,
@@ -34,6 +37,7 @@ class App extends StatelessWidget {
       ),
       home: HomePage(
         authController: authController,
+        authDefaults: authDefaults,
         shareController: shareController,
         saveImageController: saveImageController,
         paymentController: paymentController,
@@ -44,6 +48,7 @@ class App extends StatelessWidget {
 
 class HomePage extends StatelessWidget {
   final AuthController authController;
+  final AuthConfig authDefaults;
   final ShareController shareController;
   final SaveImageController saveImageController;
   final PaymentController paymentController;
@@ -51,6 +56,7 @@ class HomePage extends StatelessWidget {
   const HomePage({
     super.key,
     required this.authController,
+    required this.authDefaults,
     required this.shareController,
     required this.saveImageController,
     required this.paymentController,
@@ -68,7 +74,7 @@ class HomePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AuthSection(controller: authController),
+                AuthSection(controller: authController, defaults: authDefaults),
                 const SizedBox(height: 32),
                 const Divider(),
                 const SizedBox(height: 32),

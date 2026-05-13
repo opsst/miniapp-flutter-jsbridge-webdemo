@@ -56,16 +56,14 @@ class _StubNativeBridge extends NativeBridge {
 void main() {
   testWidgets('renders auth, share, save-image and payment sections', (tester) async {
     final bridge = _StubNativeBridge();
-    final auth = AuthController(
-      nativeBridge: bridge,
-      authConfig: const AuthConfig(clientId: 'demo', scope: 'demo'),
-    );
+    final auth = AuthController(nativeBridge: bridge);
     final share = ShareController(nativeBridge: bridge);
     final saveImage = SaveImageController(nativeBridge: bridge);
     final payment = PaymentController(nativeBridge: bridge);
 
     await tester.pumpWidget(App(
       authController: auth,
+      authDefaults: const AuthConfig(clientId: 'demo', scope: 'demo'),
       shareController: share,
       saveImageController: saveImage,
       paymentController: payment,

@@ -1,50 +1,98 @@
 import 'package:flutter/material.dart';
 
+import '../config/auth_config.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/auth/auth_state.dart';
 
 const _subtitle =
     'Calls Android window.JSBridge.initAuth or iOS window.webkit.messageHandlers observer.';
 
-class AuthSection extends StatelessWidget {
+class AuthSection extends StatefulWidget {
   final AuthController controller;
+  final AuthConfig defaults;
 
-  const AuthSection({super.key, required this.controller});
+  const AuthSection({
+    super.key,
+    required this.controller,
+    required this.defaults,
+  });
+
+  @override
+  State<AuthSection> createState() => _AuthSectionState();
+}
+
+class _AuthSectionState extends State<AuthSection> {
+  late final TextEditingController _clientId;
+  late final TextEditingController _scope;
+
+  @override
+  void initState() {
+    super.initState();
+    _clientId = TextEditingController(text: widget.defaults.clientId);
+    _scope = TextEditingController(text: widget.defaults.scope);
+    _clientId.addListener(() => setState(() {}));
+    _scope.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _clientId.dispose();
+    _scope.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: controller,
-      builder: (_, __) => _AuthBody(state: controller.state, onStart: controller.initAuth),
-    );
-  }
-}
+      animation: widget.controller,
+      builder: (_, __) {
+        final state = widget.controller.state;
+        final isLoading = state.status == AuthStatus.loading;
+        final canStart = !isLoading &&
+            _clientId.text.trim().isNotEmpty &&
+            _scope.text.trim().isNotEmpty;
 
-class _AuthBody extends StatelessWidget {
-  final AuthState state;
-  final VoidCallback onStart;
-
-  const _AuthBody({required this.state, required this.onStart});
-
-  @override
-  Widget build(BuildContext context) {
-    final isLoading = state.status == AuthStatus.loading;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text('Native Auth Bridge', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        const Text(_subtitle),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: isLoading ? null : onStart,
-          child: Text(isLoading ? 'Starting...' : 'Start Init Auth'),
-        ),
-        const SizedBox(height: 16),
-        _StatusCard(state: state),
-      ],
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Native Auth Bridge', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text(_subtitle),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _clientId,
+              decoration: const InputDecoration(
+                labelText: 'Client ID *',
+                helperText: 'AUTH_CLIENT_ID',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _scope,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Scope *',
+                helperText: 'AUTH_SCOPE — e.g. openid+offline+...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: canStart
+                  ? () => widget.controller.initAuth(
+                        clientId: _clientId.text,
+                        scope: _scope.text,
+                      )
+                  : null,
+              child: Text(isLoading ? 'Starting...' : 'Start Init Auth'),
+            ),
+            const SizedBox(height: 16),
+            _StatusCard(state: state),
+          ],
+        );
+      },
     );
   }
 }
