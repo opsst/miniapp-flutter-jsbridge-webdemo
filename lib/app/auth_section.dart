@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../config/auth_config.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/auth/auth_state.dart';
+import 'app_theme.dart';
+import 'status_card.dart';
 
 const _subtitle =
-    'Calls Android window.JSBridge.initAuth or iOS window.webkit.messageHandlers observer.';
+    'Calls Android window.JSBridge.initAuth or iOS webkit messageHandlers observer.';
 
 class AuthSection extends StatefulWidget {
   final AuthController controller;
@@ -56,40 +58,80 @@ class _AuthSectionState extends State<AuthSection> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Native Auth Bridge', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text(_subtitle),
-            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withAlpha(20),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.key_rounded, size: 22, color: AppTheme.primary),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Native auth bridge',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        _subtitle,
+                        style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             TextField(
               controller: _clientId,
               decoration: const InputDecoration(
                 labelText: 'Client ID *',
                 helperText: 'AUTH_CLIENT_ID',
-                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             TextField(
               controller: _scope,
               maxLines: 2,
               decoration: const InputDecoration(
                 labelText: 'Scope *',
                 helperText: 'AUTH_SCOPE — e.g. openid+offline+...',
-                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
-            FilledButton(
+            const SizedBox(height: 20),
+            FilledButton.icon(
               onPressed: canStart
                   ? () => widget.controller.initAuth(
                         clientId: _clientId.text,
                         scope: _scope.text,
                       )
                   : null,
-              child: Text(isLoading ? 'Starting...' : 'Start Init Auth'),
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.background),
+                    )
+                  : const Icon(Icons.play_arrow_rounded, size: 20),
+              label: Text(isLoading ? 'Starting...' : 'Start init auth'),
             ),
-            const SizedBox(height: 16),
-            _StatusCard(state: state),
+            const SizedBox(height: 20),
+            StatusCard(
+              type: _statusType(state.status),
+              title: _titleFor(state.status),
+              message: _messageFor(state),
+            ),
           ],
         );
       },
@@ -97,28 +139,12 @@ class _AuthSectionState extends State<AuthSection> {
   }
 }
 
-class _StatusCard extends StatelessWidget {
-  final AuthState state;
-
-  const _StatusCard({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_titleFor(state.status), style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            SelectableText(_messageFor(state)),
-          ],
-        ),
-      ),
-    );
-  }
-}
+StatusType _statusType(AuthStatus status) => switch (status) {
+      AuthStatus.idle => StatusType.idle,
+      AuthStatus.loading => StatusType.loading,
+      AuthStatus.success => StatusType.success,
+      AuthStatus.failure => StatusType.failure,
+    };
 
 String _titleFor(AuthStatus status) => switch (status) {
       AuthStatus.idle => 'Idle',
