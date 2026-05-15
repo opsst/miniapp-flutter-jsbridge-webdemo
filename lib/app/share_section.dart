@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../features/share/share_controller.dart';
 import '../features/share/share_state.dart';
+import 'app_theme.dart';
+import 'status_card.dart';
 
 const _subtitle =
     'Calls native share via window.JSBridge.shareContent (Android) or webkit observer (iOS).';
@@ -62,26 +64,68 @@ class _ShareSectionState extends State<ShareSection> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Share Content', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text(_subtitle),
-            const SizedBox(height: 16),
-            _field(_title, label: 'Title (optional)'),
-            const SizedBox(height: 8),
-            _field(_description, label: 'Description (optional, iOS only)'),
-            const SizedBox(height: 8),
-            _field(_content, label: 'Content *', maxLines: 3),
-            const SizedBox(height: 8),
-            _field(_icon, label: 'Icon base64 (optional, iOS thumbnail)', maxLines: 2),
-            const SizedBox(height: 12),
-            _TypeSelector(value: _type, onChanged: (v) => setState(() => _type = v)),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: canShare ? _onShare : null,
-              child: Text(isLoading ? 'Sharing...' : 'Share'),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withAlpha(20),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.share_rounded, size: 22, color: AppTheme.primary),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Share content',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        _subtitle,
+                        style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 24),
+            _field(_title, label: 'Title (optional)'),
+            const SizedBox(height: 12),
+            _field(_description, label: 'Description (optional, iOS only)'),
+            const SizedBox(height: 12),
+            _field(_content, label: 'Content *', maxLines: 3),
+            const SizedBox(height: 12),
+            _field(_icon, label: 'Icon base64 (optional, iOS thumbnail)', maxLines: 2),
             const SizedBox(height: 16),
-            _StatusCard(state: state),
+            _TypeSelector(value: _type, onChanged: (v) => setState(() => _type = v)),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: canShare ? _onShare : null,
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.background),
+                    )
+                  : const Icon(Icons.send_rounded, size: 20),
+              label: Text(isLoading ? 'Sharing...' : 'Share'),
+            ),
+            const SizedBox(height: 20),
+            StatusCard(
+              type: _statusType(state.status),
+              title: _titleFor(state.status),
+              message: _messageFor(state),
+            ),
           ],
         );
       },
@@ -92,7 +136,7 @@ class _ShareSectionState extends State<ShareSection> {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      decoration: InputDecoration(labelText: label),
     );
   }
 }
@@ -115,30 +159,14 @@ class _TypeSelector extends StatelessWidget {
   }
 }
 
-class _StatusCard extends StatelessWidget {
-  final ShareState state;
-
-  const _StatusCard({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_titleFor(state.status), style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            SelectableText(_messageFor(state)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 String? _emptyAsNull(String value) => value.trim().isEmpty ? null : value;
+
+StatusType _statusType(ShareStatus status) => switch (status) {
+      ShareStatus.idle => StatusType.idle,
+      ShareStatus.loading => StatusType.loading,
+      ShareStatus.success => StatusType.success,
+      ShareStatus.failure => StatusType.failure,
+    };
 
 String _titleFor(ShareStatus status) => switch (status) {
       ShareStatus.idle => 'Idle',

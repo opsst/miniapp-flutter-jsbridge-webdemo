@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../features/payment/payment_controller.dart';
 import '../features/payment/payment_state.dart';
 import '../features/save_image/sample_image.dart';
+import 'app_theme.dart';
+import 'status_card.dart';
 
 const _subtitle =
-    'Calls native Pay-with-Paotang via window.JSBridge.openPayment (Android) or webkit observer (iOS). On success native reloads the WebView with the deeplink URL — no success callback.';
+    'Calls native Pay-with-Paotang via window.JSBridge.openPayment (Android) or webkit observer (iOS). On success, native reloads the WebView — no success callback.';
 
 class PaymentSection extends StatefulWidget {
   final PaymentController controller;
@@ -44,25 +46,66 @@ class _PaymentSectionState extends State<PaymentSection> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Open Payment', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text(_subtitle),
-            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withAlpha(20),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.payment_rounded, size: 22, color: AppTheme.primary),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Open payment',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        _subtitle,
+                        style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             TextField(
               controller: _txnRefId,
               decoration: const InputDecoration(
                 labelText: 'PPOA Transaction Ref ID *',
                 helperText: 'txnRefId',
-                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
-            FilledButton(
+            const SizedBox(height: 20),
+            FilledButton.icon(
               onPressed: canSend ? () => widget.controller.openPayment(_txnRefId.text) : null,
-              child: Text(isSending ? 'Opening...' : 'Open Payment'),
+              icon: isSending
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.background),
+                    )
+                  : const Icon(Icons.open_in_new_rounded, size: 20),
+              label: Text(isSending ? 'Opening...' : 'Open payment'),
             ),
-            const SizedBox(height: 16),
-            _StatusCard(state: state),
+            const SizedBox(height: 20),
+            StatusCard(
+              type: _statusType(state.status),
+              title: _titleFor(state.status),
+              message: _messageFor(state),
+            ),
           ],
         );
       },
@@ -70,28 +113,11 @@ class _PaymentSectionState extends State<PaymentSection> {
   }
 }
 
-class _StatusCard extends StatelessWidget {
-  final PaymentState state;
-
-  const _StatusCard({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_titleFor(state.status), style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            SelectableText(_messageFor(state)),
-          ],
-        ),
-      ),
-    );
-  }
-}
+StatusType _statusType(PaymentStatus status) => switch (status) {
+      PaymentStatus.idle => StatusType.idle,
+      PaymentStatus.sending => StatusType.loading,
+      PaymentStatus.failure => StatusType.failure,
+    };
 
 String _titleFor(PaymentStatus status) => switch (status) {
       PaymentStatus.idle => 'Idle',
@@ -102,6 +128,6 @@ String _titleFor(PaymentStatus status) => switch (status) {
 String _messageFor(PaymentState state) => switch (state.status) {
       PaymentStatus.idle => 'Enter a txnRefId and tap Open Payment.',
       PaymentStatus.sending =>
-        'Native should open the Pay-with-Paotang flow. On success, the WebView will reload — you will not see a success state here.',
+        'Native should open the Pay-with-Paotang flow. On success, the WebView will reload.',
       PaymentStatus.failure => state.errorMessage ?? '-',
     };

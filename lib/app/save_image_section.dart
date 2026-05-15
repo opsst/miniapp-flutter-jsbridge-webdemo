@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../features/save_image/sample_image.dart';
 import '../features/save_image/save_image_controller.dart';
 import '../features/save_image/save_image_state.dart';
+import 'app_theme.dart';
+import 'status_card.dart';
 
 const _subtitle =
     'Calls native gallery save via window.JSBridge.saveImageToGallery (Android) or webkit observer (iOS).';
@@ -46,26 +48,67 @@ class _SaveImageSectionState extends State<SaveImageSection> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Save Image to Gallery', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text(_subtitle),
-            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withAlpha(20),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.image_rounded, size: 22, color: AppTheme.primary),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Save image to gallery',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        _subtitle,
+                        style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             TextField(
               controller: _data,
               maxLines: 4,
               decoration: const InputDecoration(
                 labelText: 'Base64 image data *',
                 helperText: 'Paste a base64-encoded image string',
-                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
-            FilledButton(
+            const SizedBox(height: 20),
+            FilledButton.icon(
               onPressed: canSave ? () => widget.controller.save(_data.text) : null,
-              child: Text(isLoading ? 'Saving...' : 'Save to Gallery'),
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.background),
+                    )
+                  : const Icon(Icons.save_alt_rounded, size: 20),
+              label: Text(isLoading ? 'Saving...' : 'Save to gallery'),
             ),
-            const SizedBox(height: 16),
-            _StatusCard(state: state),
+            const SizedBox(height: 20),
+            StatusCard(
+              type: _statusType(state.status),
+              title: _titleFor(state.status),
+              message: _messageFor(state),
+            ),
           ],
         );
       },
@@ -73,28 +116,12 @@ class _SaveImageSectionState extends State<SaveImageSection> {
   }
 }
 
-class _StatusCard extends StatelessWidget {
-  final SaveImageState state;
-
-  const _StatusCard({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_titleFor(state.status), style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            SelectableText(_messageFor(state)),
-          ],
-        ),
-      ),
-    );
-  }
-}
+StatusType _statusType(SaveImageStatus status) => switch (status) {
+      SaveImageStatus.idle => StatusType.idle,
+      SaveImageStatus.loading => StatusType.loading,
+      SaveImageStatus.success => StatusType.success,
+      SaveImageStatus.failure => StatusType.failure,
+    };
 
 String _titleFor(SaveImageStatus status) => switch (status) {
       SaveImageStatus.idle => 'Idle',
